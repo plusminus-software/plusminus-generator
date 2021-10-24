@@ -1,0 +1,22 @@
+package {{packageName}};
+
+{{#imports}}
+import {{.}};
+{{/imports}}
+
+{{#annotations}}
+{{.}}
+{{/annotations}}
+public class {{name}}{{#superclass}} extends {{.}}{{/superclass}}{{#interfaces}} {{#-first}}implements{{/-first}} {{.}}{{^-first}},{{/-first}}{{/interfaces}} {
+{{#fields}}
+{{>java/field}}
+{{/fields}}
+{{#constructors}}
+{{>java/constructor}}
+
+{{/constructors}}
+{{#methods}}
+{{>java/method}}
+
+{{/methods}}
+}

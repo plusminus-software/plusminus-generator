@@ -1,0 +1,15 @@
+package {{packageName}};
+
+{{#imports}}
+import {{.}};
+{{/imports}}
+
+{{#annotations}}
+{{.}}
+{{/annotations}}
+public interface {{name}}{{#interfaces}} {{#-first}}extends{{/-first}} {{.}}{{^-first}},{{/-first}}{{/interfaces}} {
+{{#methods}}
+{{>java/method}}
+
+{{/methods}}
+}
