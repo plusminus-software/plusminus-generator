@@ -39,6 +39,7 @@ public class GeneratorServiceTest {
         GeneratedFile generatedFile = new GeneratedFile(code, path);
         GeneratorAction action = GeneratorAction.CONTENT_IS_EQUAL;
         
+        when(generator.supports(TestModel.class)).thenReturn(true);
         when(generator.generate(TestModel.class)).thenReturn(generatedFile);
         when(applicationContext.getBean(TestGenerator.class)).thenReturn(generator);
         when(codeService.processCode(path, code)).thenReturn(action);

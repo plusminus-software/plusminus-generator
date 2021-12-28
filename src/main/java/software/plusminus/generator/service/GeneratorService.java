@@ -47,6 +47,7 @@ public class GeneratorService {
 
         return allGenerators.stream()
                 .map(generator -> applicationContext.getBean(generator))
+                .filter(generator -> generator.supports(sourceClass))
                 .flatMap(generator ->
                         Stream.concat(Stream.of(generator), getMissedDependencies(allGenerators, generator)))
                 .map(generator -> createTask(sourceClass, generator));

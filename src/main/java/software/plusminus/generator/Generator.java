@@ -13,4 +13,8 @@ public interface Generator {
         return Collections.emptyList();
     }
     
+    default boolean supports(Class<?> sourceClass) {
+        return true;
+    }
+    
 }
