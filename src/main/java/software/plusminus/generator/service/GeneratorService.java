@@ -29,7 +29,7 @@ public class GeneratorService {
                 .collect(Collectors.toList());
         tasks.forEach(this::generate);
         checkExceptions(tasks);
-        checkTargetsUnique(tasks);
+        removeOverriddenTasks(tasks);
         tasks.forEach(this::process);
         checkExceptions(tasks);
         return tasks;
@@ -66,7 +66,7 @@ public class GeneratorService {
         return task;
     }
 
-    private void checkTargetsUnique(List<GeneratorTask> tasks) {
+    private void removeOverriddenTasks(List<GeneratorTask> tasks) {
         Map<Path, List<GeneratorTask>> targetDuplicates = tasks.stream()
                 .filter(task -> task.getFile().getPath() != null)
                 .collect(Collectors.groupingBy(task -> task.getFile().getPath()))
@@ -74,10 +74,12 @@ public class GeneratorService {
                 .stream()
                 .filter(entry -> entry.getValue().size() > 1)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
         if (!targetDuplicates.isEmpty()) {
-            targetDuplicates.forEach((k, v) -> v.forEach(task -> task.setException(
-                    new GeneratorException("Non-unique file target path: " + k))));
-            throw new GeneratorException("Some generations have the same file target paths: " + targetDuplicates);
+            targetDuplicates.values().stream()
+                    .map(list -> list.subList(1, list.size()))
+                    .flatMap(List::stream)
+                    .forEach(tasks::remove);
         }
     }
 

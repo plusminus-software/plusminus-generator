@@ -15,8 +15,10 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -51,6 +53,8 @@ public class TypescriptGenerator extends TemplateGenerator<TypescriptClass> {
             .put(UUID.class.getName(), "string")
             .put(BigDecimal.class.getName(), "number")
             .put(LocalDate.class.getName(), "string")
+            .put(ZonedDateTime.class.getName(), "string")
+            .put(URL.class.getName(), "URL")
             .build();
 
     private static final List<String> IGNORE_FIELDS = Collections.singletonList("$jacocoData");
@@ -142,9 +146,11 @@ public class TypescriptGenerator extends TemplateGenerator<TypescriptClass> {
             title.append(" extends ");
             title.append(buildType(sourceClass.getGenericSuperclass(), imports));
         }
-        if (sourceClass.getInterfaces().length > 0) {
+        if (sourceClass.getGenericInterfaces().length > 0) {
             title.append(" implements ");
-            for (int i = 0; i < sourceClass.getInterfaces().length; i++) {
+            title.append(buildType(sourceClass.getGenericInterfaces()[0], imports));
+            for (int i = 1; i < sourceClass.getGenericInterfaces().length; i++) {
+                title.append(", ");
                 title.append(buildType(sourceClass.getGenericInterfaces()[i], imports));
             }
         }
@@ -172,7 +178,7 @@ public class TypescriptGenerator extends TemplateGenerator<TypescriptClass> {
         }
         return Stream.of(sourceClass.getDeclaredFields())
                 .filter(field -> !IGNORE_FIELDS.contains(field.getName()))
-                .map(field -> String.format("  %s: %s;",
+                .map(field -> String.format("%s: %s;",
                         field.getName(), buildType(field.getGenericType(), imports)))
                 .collect(Collectors.toList());
     }
@@ -191,7 +197,6 @@ public class TypescriptGenerator extends TemplateGenerator<TypescriptClass> {
         } else {
             result.append(container.getTypeName());
             addImports(container, result, imports);
-
         }
         return result.toString();
     }
