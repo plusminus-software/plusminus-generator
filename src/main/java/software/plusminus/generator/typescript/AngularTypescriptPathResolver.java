@@ -2,7 +2,6 @@ package software.plusminus.generator.typescript;
 
 import com.google.common.base.CaseFormat;
 import org.springframework.stereotype.Component;
-import software.plusminus.generator.typescript.model.TypescriptClass;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,7 +15,7 @@ public class AngularTypescriptPathResolver implements TypescriptPathResolver {
     
     @Override
     public Path targetPath(Class<?> sourceClass, String sourceType, @Nullable String targetType,
-                           TypescriptClass typescriptClass) {
+                           String className) {
         Path path = Paths.get("angular", "src", "app");
         if (targetType != null) {
             path = path.resolve(targetType);
@@ -24,7 +23,7 @@ public class AngularTypescriptPathResolver implements TypescriptPathResolver {
         for (String suffix : getPathSuffixes(sourceClass, sourceType)) {
             path = path.resolve(suffix);
         }
-        String filename = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, typescriptClass.name()) + ".ts";
+        String filename = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, className) + ".ts";
         path = path.resolve(filename);
         return path;
     }

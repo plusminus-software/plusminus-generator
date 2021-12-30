@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @Component
 public class TypescriptGenerator extends TemplateGenerator<TypescriptClass> {
@@ -50,10 +51,10 @@ public class TypescriptGenerator extends TemplateGenerator<TypescriptClass> {
             .put(Float.class.getName(), "number")
             .put(float.class.getName(), "number")
             .put(Date.class.getName(), "Date")
+            .put(LocalDate.class.getName(), "string")
+            .put(ZonedDateTime.class.getName(), "Date")
             .put(UUID.class.getName(), "string")
             .put(BigDecimal.class.getName(), "number")
-            .put(LocalDate.class.getName(), "string")
-            .put(ZonedDateTime.class.getName(), "string")
             .put(URL.class.getName(), "URL")
             .build();
 
@@ -70,7 +71,7 @@ public class TypescriptGenerator extends TemplateGenerator<TypescriptClass> {
     @SuppressFBWarnings("PATH_TRAVERSAL_IN")
     @Override
     public Path targetPath(Class<?> sourceClass, TypescriptClass context) {
-        return pathResolver.targetPath(sourceClass, "model", "model", context);
+        return getTargetPath(sourceClass, context.name());
     }
 
     @Override
@@ -89,42 +90,39 @@ public class TypescriptGenerator extends TemplateGenerator<TypescriptClass> {
     }
 
     private List<String> generateImports(Class<?> current, Set<Class<?>> imports) {
+        Path currentPath = getTargetPath(current, current.getSimpleName());
         return imports.stream()
                 .filter(i -> current != i)
-                .map(i -> buildImport(current, i))
+                .map(i -> buildImport(currentPath, i))
                 .collect(Collectors.toList());
     }
 
-    private String buildImport(Class<?> current, Class<?> toImport) {
-        List<String> currentPath = Stream.of(current.getPackage().getName().split("\\."))
-                .collect(Collectors.toList());
-        List<String> toImportPath = Stream.of(toImport.getPackage().getName().split("\\."))
-                .collect(Collectors.toList());
+    private String buildImport(Path currentPath, Class<?> toImport) {
+        Path toImportPath = getTargetPath(toImport, toImport.getSimpleName());
+        List<String> currentFolders = getFolders(currentPath);
+        List<String> toImportFolders = getFolders(toImportPath);
 
-        while (!currentPath.isEmpty()
-                && !toImportPath.isEmpty()
-                && currentPath.get(0).equals(toImportPath.get(0))) {
+        while (!currentFolders.isEmpty()
+                && !toImportFolders.isEmpty()
+                && currentFolders.get(0).equals(toImportFolders.get(0))) {
 
-            currentPath.remove(0);
-            toImportPath.remove(0);
+            currentFolders.remove(0);
+            toImportFolders.remove(0);
         }
 
         StringBuilder path = new StringBuilder();
-        if (currentPath.isEmpty()) {
+        if (currentFolders.isEmpty()) {
             path.append("./");
         } else {
-            path.append(StringUtils.repeat("../", currentPath.size()));
+            path.append(StringUtils.repeat("../", currentFolders.size()));
         }
 
-        if (toImportPath.isEmpty()) {
-            path.append(CaseFormat.UPPER_CAMEL
-                    .to(CaseFormat.LOWER_HYPHEN, toImport.getSimpleName()));
-        } else {
-            path.append(String.join("/", toImportPath));
+        if (!toImportFolders.isEmpty()) {
+            path.append(String.join("/", toImportFolders));
             path.append("/");
-            path.append(CaseFormat.UPPER_CAMEL
-                    .to(CaseFormat.LOWER_HYPHEN, toImport.getSimpleName()));
         }
+        path.append(CaseFormat.UPPER_CAMEL
+                .to(CaseFormat.LOWER_HYPHEN, toImport.getSimpleName()));
 
         return String.format("import { %s } from '%s';", toImport.getSimpleName(), path);
     }
@@ -166,6 +164,9 @@ public class TypescriptGenerator extends TemplateGenerator<TypescriptClass> {
         } else if (sourceClass.isInterface()) {
             title.append("interface ");
         } else {
+            if (Modifier.isAbstract(sourceClass.getModifiers())) {
+                title.append("abstract ");
+            }
             title.append("class ");
         }
     }
@@ -259,5 +260,19 @@ public class TypescriptGenerator extends TemplateGenerator<TypescriptClass> {
             addImports(bound, result, imports);
         }
         // TODO lower bounds
+    }
+    
+    private Path getTargetPath(Class<?> sourceClass, String className) {
+        return pathResolver.targetPath(sourceClass, "model", "model", className);
+    }
+    
+    private List<String> getFolders(Path path) {
+        Path parent = path.getParent();
+        if (parent == null) {
+            return Collections.emptyList();
+        }
+        return StreamSupport.stream(parent.spliterator(), false)
+                .map(Path::toString)
+                .collect(Collectors.toList());
     }
 }

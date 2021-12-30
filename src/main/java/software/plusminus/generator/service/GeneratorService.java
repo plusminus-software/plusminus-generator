@@ -11,6 +11,7 @@ import software.plusminus.generator.model.GeneratorAction;
 import software.plusminus.generator.model.GeneratorTask;
 
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +41,7 @@ public class GeneratorService {
                 sourceClass, Generate.class)
                 .stream()
                 .flatMap(annotation -> Stream.of(annotation.value()))
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         if (allGenerators.isEmpty()) {
             return Stream.empty();
         }
@@ -77,7 +78,7 @@ public class GeneratorService {
 
         if (!targetDuplicates.isEmpty()) {
             targetDuplicates.values().stream()
-                    .map(list -> list.subList(1, list.size()))
+                    .map(list -> list.subList(0, list.size() - 1))
                     .flatMap(List::stream)
                     .forEach(tasks::remove);
         }
