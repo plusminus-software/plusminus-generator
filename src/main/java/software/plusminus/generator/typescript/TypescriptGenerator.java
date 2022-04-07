@@ -21,7 +21,7 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -76,7 +76,7 @@ public class TypescriptGenerator extends TemplateGenerator<TypescriptClass> {
 
     @Override
     public TypescriptClass generateModel(Class<?> sourceClass) {
-        Set<Class<?>> dependencies = new HashSet<>();
+        Set<Class<?>> dependencies = new LinkedHashSet<>();
         String name = sourceClass.getSimpleName();
         String title = generateTitle(sourceClass, name, dependencies);
         List<String> fields = generateFields(sourceClass, dependencies);
